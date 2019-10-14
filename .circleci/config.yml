@@ -1,0 +1,129 @@
+# Python CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-python/ for more details
+#
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version you desire here
+      # use `-browsers` prefix for selenium tests, e.g. `3.6.1-browsers`
+      - image: circleci/python:3.6.8
+    environment:
+          FLASK_CONFIG: testing
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - run:
+          name: Setup Environment Variables
+          command: |
+            echo 'export TAG=0.1.${CIRCLE_BUILD_NUM}' >> $BASH_ENV
+            echo 'export image_name=flaskapp' >> $BASH_ENV 
+            sudo pip install --no-cache-dir -r requirements.txt
+      - run:
+          name: Run Tests
+          command: |
+            python test_svc_controller.py
+      - add_ssh_keys:
+          fingerprints:
+          - 50:19:67:2e:e4:78:f4:63:6a:bd:28:cf:e3:72:54:69
+      - run:
+          name: git clone circleci-flask-demo repository
+          command: |
+            git clone git@github.com:singleobligor/circleci-flask-demo.git
+            pwd;ls -latr; echo ""; ls -latr circleci-flask-demo
+            tar -czvf circleci-flask-demo-latest.tar.gz circleci-flask-demo
+      - setup_remote_docker
+      - run:
+          name: Install AWS CLI
+          command: |
+            export PIP=$(which pip pip3 | head -1)
+            if [[ -n $PIP ]]; then
+              if which sudo > /dev/null; then
+                sudo $PIP install awscli --upgrade
+              else
+                # This installs the AWS CLI to ~/.local/bin. Make sure that ~/.local/bin is in your $PATH.
+                $PIP install aws --upgrade --user
+              fi
+            elif [[ $(which unzip curl | wc -l) -eq 2 ]]; then
+              cd
+              curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
+              unzip awscli-bundle.zip
+              if which sudo > /dev/null; then
+                sudo ~/awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
+              else
+                # This installs the AWS CLI to the default location (~/.local/lib/aws) and create a symbolic link (symlink) at ~/bin/aws. Make sure that ~/bin is in your $PATH.
+                awscli-bundle/install -b ~/bin/aws
+              fi
+              rm -rf awscli-bundle*
+              cd -
+            else
+              echo "Unable to install AWS CLI. Please install pip."
+              exit 1
+            fi
+      - run:
+          name: Configure AWS Access Key ID
+          command: |
+            aws configure set aws_access_key_id \
+            ACCESS_KEY_ID \
+            --profile default
+      - run:
+          name: Configure AWS Secret Access Key
+          command: |
+            aws configure set aws_secret_access_key \
+            SECRET_ACCESS_KEY \
+            --profile default
+      - run:
+          name: Configure AWS default region
+          command: |
+            aws configure set region AWS_REGION \
+            --profile default
+      - run:
+          name: Docker login
+          command: |
+            export AWS_ACCESS_KEY_ID=${ACCESS_KEY_ID} && export AWS_SECRET_ACCESS_KEY=${SECRET_ACCESS_KEY}
+            export AWS_DEFAULT_REGION=${AWS_REGION}
+            aws --version
+            $(aws ecr get-login --region ${AWS_REGION} --no-include-email)
+      - run:
+          name: Build Docker image
+          command: |
+            current_directory=$(pwd)
+            echo $current_directory
+            docker build -t flaskapp . -f ./Dockerfile
+            docker ps
+      - run:
+          name: Publish Docker image to AWS ECR
+          # command: "echo \"--------------- Publish to AWS ECR Start -------------\"\n\
+          #   docker tag flaskapp:latest ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/flaskapp:latest\n
+          #   docker push ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/flaskapp:latest\n
+          #   docker run -d -p 5000:5000 flaskapp\n
+          #   echo \"--------------- Publish to AWS ECR End -------------\"\n"
+          command: |
+            echo "--------------- Publish to AWS ECR Start -------------"
+            current_directory=$(pwd)
+            registry_url="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+            echo "registry_url=$registry_url"
+            git_hash=$(git -C ${current_directory} rev-parse --short=11 HEAD)
+            echo "git_hash=$git_hash"
+            imageID=$(docker images ${image_name}:latest | awk 'FNR == 2 { print $3 }' )
+            echo "imageID=$imageID"
+            echo "Tagging ---> ${registry_url}/${image_name}:latest"
+            docker tag $imageID ${registry_url}/${image_name}:latest
+            echo "Pushing ---> ${registry_url}/${image_name}:latest"
+            docker push ${registry_url}/${image_name}:latest
+            echo "Tagging ---> ${registry_url}/${image_name}:${git_hash}"
+            docker tag $imageID ${registry_url}/${image_name}:${git_hash}
+            echo "Pushing ---> ${registry_url}/${image_name}:${git_hash}"
+            docker push ${registry_url}/${image_name}:${git_hash}
+            docker rmi -f ${imageID}
+            echo "--------------- Publish to AWS ECR End ------------"
+workflows:
+  version: 2
+  build:
+    jobs:
+    - build:
+        filters:
+          branches:
+            only: master
+        context: circleci-deployment
