@@ -133,7 +133,7 @@ jobs:
           command: kubectl set image deployments/flaskapp flaskapp=${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/flaskapp:$TAG
 workflows:
   version: 2
-  primary:
+  build:
     jobs:
     - build-test-deploy:
         filters:
