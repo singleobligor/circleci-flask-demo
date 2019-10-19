@@ -82,9 +82,6 @@ jobs:
           command: |
             aws configure set region AWS_REGION \
             --profile default
-      - run:
-          name: Install and confgure kubectl
-          command: sudo curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && sudo chmod +x /usr/local/bin/kubectl
       - run:
           name: Docker login
           command: |
