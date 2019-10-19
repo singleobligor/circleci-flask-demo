@@ -121,13 +121,16 @@ jobs:
           #   docker push ${registry_url}/${image_name}:${git_hash}
           #   docker rmi -f ${imageID}
           #   echo "--------------- Publish to AWS ECR End ------------"
-      - run:
+      - run:
           name: Install and confgure kubectl
-          command: |
-            curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
-            chmod +x ./kubectl
-            sudo mv ./kubectl /usr/local/bin/kubectl
-            kubectl version
+          command: sudo curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && sudo chmod +x /usr/local/bin/kubectl
+#       - run:
+#           name: Install and confgure kubectl
+#           command: |
+#             curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
+#             chmod +x ./kubectl
+#             sudo mv ./kubectl /usr/local/bin/kubectl
+#             kubectl version
 workflows:
   version: 2
   build:
