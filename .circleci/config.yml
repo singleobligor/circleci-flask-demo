@@ -10,14 +10,14 @@ jobs:
       # use `-browsers` prefix for selenium tests, e.g. `3.6.1-browsers`
       - image: circleci/python:3.6.8
     environment:
-          FLASK_CONFIG: testing
+      FLASK_CONFIG: testing
     working_directory: ~/repo
     steps:
       - checkout
       - run:
           name: Setup Environment Variables
           command: |
-            echo 'export TAG=$(cat VERSION)-${CIRCLE_BUILD_NUM}' >> $BASH_ENV
+            echo 'export TAG=(cat VERSION)-${CIRCLE_BUILD_NUM}' >> $BASH_ENV
             # echo 'export TAG=$(cat VERSION)-$CIRCLE_BUILD_NUM' >> $BASH_ENV
             echo 'export image_name=flaskapp' >> $BASH_ENV 
             sudo pip install --no-cache-dir -r requirements.txt
@@ -119,18 +119,6 @@ jobs:
           #   docker push ${registry_url}/${image_name}:${git_hash}
           #   docker rmi -f ${imageID}
           #   echo "--------------- Publish to AWS ECR End ------------"
-      - run:
-          name: Set the tag for the image, we will concatenate the app verson and circle build number with a `-` char in between
-          command:  echo 'export TAG=$(cat VERSION)-$CIRCLE_PREVIOUS_BUILD_NUM' >> $BASH_ENV
-      - run:
-          name: Install and confgure kubectl
-          command: sudo curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && sudo chmod +x /usr/local/bin/kubectl
-      - run:
-          name: Install and confgure kubectl aws-iam-authenticator
-          command: curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-07-26/bin/linux/amd64/aws-iam-authenticator && sudo chmod +x ./aws-iam-authenticator && sudo cp ./aws-iam-authenticator /bin/aws-iam-authenticator
-      - run:
-          name: update the image of the App
-          command: kubectl set image deployments/flaskapp flaskapp=${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/flaskapp:$TAG
 workflows:
   version: 2
   build:
