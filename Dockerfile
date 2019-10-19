@@ -18,7 +18,7 @@ WORKDIR /usr/local/flaskapp/
 # # Install required packages 
 RUN pip install -r requirements.txt
 
-EXPOSE 80
+EXPOSE 5000
 
 ENTRYPOINT [ "python" ]
 

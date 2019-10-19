@@ -4,7 +4,7 @@
 #
 version: 2
 jobs:
-  build:
+  build-test-deploy:
     docker:
       # specify the version you desire here
       # use `-browsers` prefix for selenium tests, e.g. `3.6.1-browsers`
@@ -17,7 +17,8 @@ jobs:
       - run:
           name: Setup Environment Variables
           command: |
-            echo 'export TAG=0.1.${CIRCLE_BUILD_NUM}' >> $BASH_ENV
+            echo 'export TAG=$(cat VERSION)-${CIRCLE_BUILD_NUM}' >> $BASH_ENV
+            # echo 'export TAG=$(cat VERSION)-$CIRCLE_BUILD_NUM' >> $BASH_ENV
             echo 'export image_name=flaskapp' >> $BASH_ENV 
             sudo pip install --no-cache-dir -r requirements.txt
       - run:
@@ -33,7 +34,8 @@ jobs:
             git clone git@github.com:singleobligor/circleci-flask-demo.git
             pwd;ls -latr; echo ""; ls -latr circleci-flask-demo
             tar -czvf circleci-flask-demo-latest.tar.gz circleci-flask-demo
-      - setup_remote_docker
+      - setup_remote_docker:
+          docker_layer_caching: true
       - run:
           name: Install AWS CLI
           command: |
@@ -90,39 +92,50 @@ jobs:
           command: |
             current_directory=$(pwd)
             echo $current_directory
-            docker build -t flaskapp . -f ./Dockerfile
+            docker build -t flaskapp:$TAG . -f ./Dockerfile
             docker ps
       - run:
           name: Publish Docker image to AWS ECR
-          # command: "echo \"--------------- Publish to AWS ECR Start -------------\"\n\
-          #   docker tag flaskapp:latest ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/flaskapp:latest\n
-          #   docker push ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/flaskapp:latest\n
-          #   docker run -d -p 5000:5000 flaskapp\n
-          #   echo \"--------------- Publish to AWS ECR End -------------\"\n"
-          command: |
-            echo "--------------- Publish to AWS ECR Start -------------"
-            current_directory=$(pwd)
-            registry_url="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-            echo "registry_url=$registry_url"
-            git_hash=$(git -C ${current_directory} rev-parse --short=11 HEAD)
-            echo "git_hash=$git_hash"
-            imageID=$(docker images ${image_name}:latest | awk 'FNR == 2 { print $3 }' )
-            echo "imageID=$imageID"
-            echo "Tagging ---> ${registry_url}/${image_name}:latest"
-            docker tag $imageID ${registry_url}/${image_name}:latest
-            echo "Pushing ---> ${registry_url}/${image_name}:latest"
-            docker push ${registry_url}/${image_name}:latest
-            echo "Tagging ---> ${registry_url}/${image_name}:${git_hash}"
-            docker tag $imageID ${registry_url}/${image_name}:${git_hash}
-            echo "Pushing ---> ${registry_url}/${image_name}:${git_hash}"
-            docker push ${registry_url}/${image_name}:${git_hash}
-            docker rmi -f ${imageID}
-            echo "--------------- Publish to AWS ECR End ------------"
+          command: "echo \"--------------- Publish to AWS ECR Start -------------\"\n\
+            docker tag flaskapp:$TAG ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/flaskapp:$TAG\n
+            docker push ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/flaskapp:$TAG\n
+            echo \"--------------- Publish to AWS ECR End -------------\"\n"
+          # command: |
+          #   echo "--------------- Publish to AWS ECR Start -------------"
+          #   current_directory=$(pwd)
+          #   registry_url="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          #   echo "registry_url=$registry_url"
+          #   git_hash=$(git -C ${current_directory} rev-parse --short=11 HEAD)
+          #   echo "git_hash=$git_hash"
+          #   imageID=$(docker images ${image_name}:latest | awk 'FNR == 2 { print $3 }' )
+          #   echo "imageID=$imageID"
+          #   echo "Tagging ---> ${registry_url}/${image_name}:latest"
+          #   docker tag $imageID ${registry_url}/${image_name}:latest
+          #   echo "Pushing ---> ${registry_url}/${image_name}:latest"
+          #   docker push ${registry_url}/${image_name}:latest
+          #   echo "Tagging ---> ${registry_url}/${image_name}:${git_hash}"
+          #   docker tag $imageID ${registry_url}/${image_name}:${git_hash}
+          #   echo "Pushing ---> ${registry_url}/${image_name}:${git_hash}"
+          #   docker push ${registry_url}/${image_name}:${git_hash}
+          #   docker rmi -f ${imageID}
+          #   echo "--------------- Publish to AWS ECR End ------------"
+      - run:
+          name: Set the tag for the image, we will concatenate the app verson and circle build number with a `-` char in between
+          command:  echo 'export TAG=$(cat VERSION)-$CIRCLE_PREVIOUS_BUILD_NUM' >> $BASH_ENV
+      - run:
+          name: Install and confgure kubectl
+          command: sudo curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && sudo chmod +x /usr/local/bin/kubectl
+      - run:
+          name: Install and confgure kubectl aws-iam-authenticator
+          command: curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-07-26/bin/linux/amd64/aws-iam-authenticator && sudo chmod +x ./aws-iam-authenticator && sudo cp ./aws-iam-authenticator /bin/aws-iam-authenticator
+      - run:
+          name: update the image of the App
+          command: kubectl set image deployments/flaskapp flaskapp=${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/flaskapp:$TAG
 workflows:
   version: 2
-  build:
+  primary:
     jobs:
-    - build:
+    - build-test-deploy:
         filters:
           branches:
             only: master
