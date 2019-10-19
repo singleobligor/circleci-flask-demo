@@ -34,8 +34,7 @@ jobs:
             git clone git@github.com:singleobligor/circleci-flask-demo.git
             pwd;ls -latr; echo ""; ls -latr circleci-flask-demo
             tar -czvf circleci-flask-demo-latest.tar.gz circleci-flask-demo
-      - setup_remote_docker:
-          docker_layer_caching: true
+      - setup_remote_docker
       - run:
           name: Install AWS CLI
           command: |
