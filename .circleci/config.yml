@@ -15,12 +15,12 @@ jobs:
     steps:
       - checkout
       - run:
-          name: up Environment Variables
+          name: Setup Environment Variables
           command: |
             echo 'export TAG=0.2.${CIRCLE_BUILD_NUM}' >> $BASH_ENV
             echo $TAG
-            echo 'export TAGWithVersion=$(cat VERSION)-$CIRCLE_BUILD_NUM' >> $BASH_ENV
-            echo $TAGWithVersion
+            # echo 'export TAGWithVersion=$(cat VERSION)-$CIRCLE_BUILD_NUM' >> $BASH_ENV
+            # echo $TAGWithVersion
             # echo 'export TAG=$(cat VERSION)-$CIRCLE_BUILD_NUM' >> $BASH_ENV
             echo 'export image_name=flaskapp' >> $BASH_ENV 
             sudo pip install --no-cache-dir -r requirements.txt
@@ -82,6 +82,9 @@ jobs:
           command: |
             aws configure set region AWS_REGION \
             --profile default
+      - run:
+          name: Install and confgure kubectl
+          command: sudo curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && sudo chmod +x /usr/local/bin/kubectl
       - run:
           name: Docker login
           command: |
@@ -121,9 +124,6 @@ jobs:
           #   docker push ${registry_url}/${image_name}:${git_hash}
           #   docker rmi -f ${imageID}
           #   echo "--------------- Publish to AWS ECR End ------------"
-      - run:
-          name: Install and confgure kubectl
-          command: sudo curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && sudo chmod +x /usr/local/bin/kubectl
 #       - run:
 #           name: Install and confgure kubectl
 #           command: |
