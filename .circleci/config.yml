@@ -141,6 +141,23 @@ jobs:
           name: Install latest awscli version
           command: sudo apt install unzip && curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip" && unzip awscli-bundle.zip &&./awscli-bundle/install -b ~/bin/aws
       - run:
+          name: Configure AWS Access Key ID
+          command: |
+            aws configure set aws_access_key_id \
+            ACCESS_KEY_ID \
+            --profile default
+      - run:
+          name: Configure AWS Secret Access Key
+          command: |
+            aws configure set aws_secret_access_key \
+            SECRET_ACCESS_KEY \
+            --profile default
+      - run:
+          name: Configure AWS default region
+          command: |
+            aws configure set region AWS_REGION \
+            --profile default
+      - run:
           name: Get the kubeconfig file 
           command: export KUBECONFIG=$HOME/.kube/kubeconfig && /home/circleci/bin/aws eks --region $AWS_REGION update-kubeconfig --name $EKS_CLUSTER_NAME
       - run:
