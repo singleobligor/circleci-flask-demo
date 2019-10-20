@@ -2,7 +2,6 @@
 #
 # Check https://circleci.com/docs/2.0/language-python/ for more details
 #
-version: 2
 jobs:
   build:
     docker:
@@ -138,19 +137,9 @@ jobs:
       - run:
           name: Install and confgure kubectl aws-iam-authenticator
           command: curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-07-26/bin/linux/amd64/aws-iam-authenticator && sudo chmod +x ./aws-iam-authenticator && sudo cp ./aws-iam-authenticator /bin/aws-iam-authenticator
-      #  - run:
-      #     name: Install latest awscli version
-      #     command: sudo apt install unzip && curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip" && unzip awscli-bundle.zip &&./awscli-bundle/install -b ~/bin/aws
-#       - run:
-#           name: Install and confgure kubectl
-#           command: |
-#             curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
-#             chmod +x ./kubectl
-#             sudo mv ./kubectl /usr/local/bin/kubectl
-#             kubectl version
 workflows:
   version: 2
-  primary:
+  build_test_deploy:
     jobs:
     - build:
         filters:
