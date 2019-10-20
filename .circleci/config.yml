@@ -159,7 +159,8 @@ jobs:
             --profile default
       -run:
          name: Update Image From AWS ECR
-         command: kubectl set image deployment/flaskapp flaskapp=322218137685.dkr.ecr.us-west-2.amazonaws.com/flaskapp:0.2.27 --record
+         command: |
+           kubectl set image deployment/flaskapp flaskapp=322218137685.dkr.ecr.us-west-2.amazonaws.com/flaskapp:0.2.27 --record
       # - run:
       #     name: Get the kubeconfig file 
       #     command: export KUBECONFIG=$HOME/.kube/kubeconfig && /home/circleci/bin/aws eks --region $AWS_REGION update-kubeconfig --name $EKS_CLUSTER_NAME
