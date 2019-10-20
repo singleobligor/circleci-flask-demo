@@ -121,6 +121,28 @@ jobs:
           #   docker push ${registry_url}/${image_name}:${git_hash}
           #   docker rmi -f ${imageID}
           #   echo "--------------- Publish to AWS ECR End ------------"
+  deploy:
+    docker:
+        - image: circleci/python:3.6.8
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Install AWS cli
+          command: export TZ=Europe/Minsk && sudo ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > sudo  /etc/timezone && sudo apt-get update && sudo apt-get install -y awscli
+      - run:
+          name: Set the tag for the image, we will concatenate the app verson and circle build number with a `-` char in between
+          command:  echo 'export TAG=$0.2.$CIRCLE_PREVIOUS_BUILD_NUM' >> $BASH_ENV
+      - run:
+          name: Install and confgure kubectl
+          command: sudo curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && sudo chmod +x /usr/local/bin/kubectl  
+      - run:
+          name: Install and confgure kubectl aws-iam-authenticator
+          command: curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-07-26/bin/linux/amd64/aws-iam-authenticator && sudo chmod +x ./aws-iam-authenticator && sudo cp ./aws-iam-authenticator /bin/aws-iam-authenticator
+       - run:
+          name: Install latest awscli version
+          command: sudo apt install unzip && curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip" && unzip awscli-bundle.zip &&./awscli-bundle/install -b ~/bin/aws
 #       - run:
 #           name: Install and confgure kubectl
 #           command: |
@@ -130,10 +152,13 @@ jobs:
 #             kubectl version
 workflows:
   version: 2
-  build:
+  primary:
     jobs:
     - build:
         filters:
           branches:
             only: master
         context: circleci-deployment
+    - deploy:
+        requires:
+          - build
