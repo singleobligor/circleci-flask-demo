@@ -140,7 +140,7 @@ jobs:
       -run:
          name: Update Image Tag
          command: "echo \"--------------- Start Update AWS ECR Latest Image to Kubernetes -------------\"\n\
-           kubectl set image deployments/flaskapp flaskapp=${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/flaskapp:$TAG\n
+           kubectl version
            echo \"--------------- Updated AWS ECR Latest Image to Kubernetes -------------\"\n"
 workflows:
   version: 2
