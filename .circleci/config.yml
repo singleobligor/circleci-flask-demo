@@ -16,10 +16,10 @@ jobs:
       - run:
           name: Setup Environment Variables
           command: |
-            echo 'export TAG=0.2.${CIRCLE_BUILD_NUM}' >> $BASH_ENV
+            echo 'export TAG=0.3.${CIRCLE_BUILD_NUM}' >> $BASH_ENV
             echo $TAG
-            # echo 'export TAGWithVersion=$(cat VERSION)-$CIRCLE_BUILD_NUM' >> $BASH_ENV
-            # echo $TAGWithVersion
+            echo 'export TAGWithVersion=$(cat VERSION)-$CIRCLE_BUILD_NUM' >> $BASH_ENV
+            echo $TAGWithVersion
             # echo 'export TAG=$(cat VERSION)-$CIRCLE_BUILD_NUM' >> $BASH_ENV
             echo 'export image_name=flaskapp' >> $BASH_ENV 
             sudo pip install --no-cache-dir -r requirements.txt
@@ -127,16 +127,19 @@ jobs:
       - checkout
       - run:
           name: Install AWS cli
-          command: export TZ=Europe/Minsk && sudo ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > sudo  /etc/timezone && sudo apt-get update && sudo apt-get install -y awscli
+          command: export TZ=America/Sao_Paulo && sudo ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > sudo  /etc/timezone && sudo apt-get update && sudo apt-get install -y awscli
       - run:
           name: Set the tag for the image, we will concatenate the app verson and circle build number with a `-` char in between
-          command:  echo 'export TAG=$0.2.$CIRCLE_PREVIOUS_BUILD_NUM' >> $BASH_ENV
+          command:  echo 'export TAG=$0.3.$CIRCLE_PREVIOUS_BUILD_NUM' >> $BASH_ENV
       - run:
           name: Install and confgure kubectl
           command: sudo curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && sudo chmod +x /usr/local/bin/kubectl  
       - run:
           name: Install and confgure kubectl aws-iam-authenticator
           command: curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-07-26/bin/linux/amd64/aws-iam-authenticator && sudo chmod +x ./aws-iam-authenticator && sudo cp ./aws-iam-authenticator /bin/aws-iam-authenticator
+      -run:
+         name: Update Image Tag
+         command: kubectl set image deployments/flaskapp flaskapp=${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/flaskapp:$TAG
 workflows:
   version: 2
   build_test_deploy:
