@@ -139,7 +139,9 @@ jobs:
           command: curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-07-26/bin/linux/amd64/aws-iam-authenticator && sudo chmod +x ./aws-iam-authenticator && sudo cp ./aws-iam-authenticator /bin/aws-iam-authenticator
       -run:
          name: Update Image Tag
-         command: kubectl set image deployments/flaskapp flaskapp=${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/flaskapp:$TAG
+         command: "echo \"--------------- Start Update AWS ECR Latest Image to Kubernetes -------------\"\n\
+           kubectl set image deployments/flaskapp flaskapp=${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/flaskapp:$TAG\n
+           echo \"--------------- Updated AWS ECR Latest Image to Kubernetes -------------\"\n"
 workflows:
   version: 2
   build_test_deploy:
@@ -150,5 +152,6 @@ workflows:
             only: master
         context: circleci-deployment
     - deploy:
+        context: circleci-deployment
         requires:
           - build
