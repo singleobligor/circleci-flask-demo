@@ -157,7 +157,7 @@ jobs:
           command: |
             aws configure set region AWS_REGION \
             --profile default
-      -run:
+      - run:
          name: Update Image From AWS ECR
          command: |
            kubectl set image deployment/flaskapp flaskapp=322218137685.dkr.ecr.us-west-2.amazonaws.com/flaskapp:0.2.27 --record
