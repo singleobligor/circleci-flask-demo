@@ -18,8 +18,8 @@ jobs:
           command: |
             echo 'export TAG=0.3.${CIRCLE_BUILD_NUM}' >> $BASH_ENV
             echo $TAG
-            echo 'export TAGWithVersion=$(cat VERSION)-$CIRCLE_BUILD_NUM' >> $BASH_ENV
-            echo $TAGWithVersion
+            # echo 'export TAGWithVersion=$(cat VERSION)-$CIRCLE_BUILD_NUM' >> $BASH_ENV
+            # echo $TAGWithVersion
             # echo 'export TAG=$(cat VERSION)-$CIRCLE_BUILD_NUM' >> $BASH_ENV
             echo 'export image_name=flaskapp' >> $BASH_ENV 
             sudo pip install --no-cache-dir -r requirements.txt
