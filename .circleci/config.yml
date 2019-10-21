@@ -16,8 +16,9 @@ jobs:
       - run:
           name: Setup Environment Variables
           command: |
-            echo 'export TAG=0.3.${CIRCLE_BUILD_NUM}' >> $BASH_ENV
-            echo $TAG
+            # echo 'export TAG=0.3.${CIRCLE_BUILD_NUM}' >> $BASH_ENV
+            echo 'export TAG=latest' >> $BASH_ENV
+            # echo $TAG
             # echo 'export TAGWithVersion=$(cat VERSION)-$CIRCLE_BUILD_NUM' >> $BASH_ENV
             # echo $TAGWithVersion
             # echo 'export TAG=$(cat VERSION)-$CIRCLE_BUILD_NUM' >> $BASH_ENV
@@ -97,70 +98,70 @@ jobs:
             docker ps
       - run:
           name: Publish Docker image to AWS ECR
-          command: "echo \"--------------- Publish to AWS ECR Start -------------\"\n\
-            docker tag flaskapp:$TAG ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/flaskapp:$TAG\n
-            docker push ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/flaskapp:$TAG\n
-            echo \"--------------- Publish to AWS ECR End -------------\"\n"
-          # command: |
-          #   echo "--------------- Publish to AWS ECR Start -------------"
-          #   current_directory=$(pwd)
-          #   registry_url="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-          #   echo "registry_url=$registry_url"
-          #   git_hash=$(git -C ${current_directory} rev-parse --short=11 HEAD)
-          #   echo "git_hash=$git_hash"
-          #   imageID=$(docker images ${image_name}:latest | awk 'FNR == 2 { print $3 }' )
-          #   echo "imageID=$imageID"
-          #   echo "Tagging ---> ${registry_url}/${image_name}:latest"
-          #   docker tag $imageID ${registry_url}/${image_name}:latest
-          #   echo "Pushing ---> ${registry_url}/${image_name}:latest"
-          #   docker push ${registry_url}/${image_name}:latest
-          #   echo "Tagging ---> ${registry_url}/${image_name}:${git_hash}"
-          #   docker tag $imageID ${registry_url}/${image_name}:${git_hash}
-          #   echo "Pushing ---> ${registry_url}/${image_name}:${git_hash}"
-          #   docker push ${registry_url}/${image_name}:${git_hash}
-          #   docker rmi -f ${imageID}
-          #   echo "--------------- Publish to AWS ECR End ------------"
-  deploy:
-    docker:
-        - image: circleci/python:3.6.8
-    steps:
-      - checkout
-      - run:
-          name: Install AWS cli
-          command: export TZ=America/Sao_Paulo && sudo ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > sudo  /etc/timezone && sudo apt-get update && sudo apt-get install -y awscli
-      - run:
-          name: Set the tag for the image, we will concatenate the app verson and circle build number with a `-` char in between
-          command:  echo 'export TAG=$0.3.$CIRCLE_PREVIOUS_BUILD_NUM' >> $BASH_ENV
-      - run:
-          name: Install and confgure kubectl
-          command: sudo curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && sudo chmod +x /usr/local/bin/kubectl  
-      - run:
-          name: Install and confgure kubectl aws-iam-authenticator
-          command: curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-07-26/bin/linux/amd64/aws-iam-authenticator && sudo chmod +x ./aws-iam-authenticator && sudo cp ./aws-iam-authenticator /bin/aws-iam-authenticator
-      - run:
-          name: Install latest awscli version
-          command: sudo apt install unzip && curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip" && unzip awscli-bundle.zip &&./awscli-bundle/install -b ~/bin/aws
-      - run:
-          name: Configure AWS Access Key ID
+          # command: "echo \"--------------- Publish to AWS ECR Start -------------\"\n\
+          #   docker tag flaskapp:$TAG ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/flaskapp:$TAG\n
+          #   docker push ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/flaskapp:$TAG\n
+          #   echo \"--------------- Publish to AWS ECR End -------------\"\n"
           command: |
-            aws configure set aws_access_key_id \
-            ACCESS_KEY_ID \
-            --profile default
-      - run:
-          name: Configure AWS Secret Access Key
-          command: |
-            aws configure set aws_secret_access_key \
-            SECRET_ACCESS_KEY \
-            --profile default
-      - run:
-          name: Configure AWS default region
-          command: |
-            aws configure set region AWS_REGION \
-            --profile default
-      - run:
-         name: Update Image From AWS ECR
-         command: |
-           kubectl set image deployment/flaskapp flaskapp=322218137685.dkr.ecr.us-west-2.amazonaws.com/flaskapp:0.2.27 --record
+            echo "--------------- Publish to AWS ECR Start -------------"
+            current_directory=$(pwd)
+            registry_url="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+            echo "registry_url=$registry_url"
+            git_hash=$(git -C ${current_directory} rev-parse --short=11 HEAD)
+            echo "git_hash=$git_hash"
+            imageID=$(docker images ${image_name}:latest | awk 'FNR == 2 { print $3 }' )
+            echo "imageID=$imageID"
+            echo "Tagging ---> ${registry_url}/${image_name}:latest"
+            docker tag $imageID ${registry_url}/${image_name}:latest
+            echo "Pushing ---> ${registry_url}/${image_name}:latest"
+            docker push ${registry_url}/${image_name}:latest
+            echo "Tagging ---> ${registry_url}/${image_name}:${git_hash}"
+            docker tag $imageID ${registry_url}/${image_name}:${git_hash}
+            echo "Pushing ---> ${registry_url}/${image_name}:${git_hash}"
+            docker push ${registry_url}/${image_name}:${git_hash}
+            docker rmi -f ${imageID}
+            echo "--------------- Publish to AWS ECR End ------------"
+  # deploy:
+  #   docker:
+  #       - image: circleci/python:3.6.8
+  #   steps:
+  #     - checkout
+  #     - run:
+  #         name: Install AWS cli
+  #         command: export TZ=America/Sao_Paulo && sudo ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > sudo  /etc/timezone && sudo apt-get update && sudo apt-get install -y awscli
+  #     - run:
+  #         name: Set the tag for the image, we will concatenate the app verson and circle build number with a `-` char in between
+  #         command:  echo 'export TAG=$0.3.$CIRCLE_PREVIOUS_BUILD_NUM' >> $BASH_ENV
+  #     - run:
+  #         name: Install and confgure kubectl
+  #         command: sudo curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && sudo chmod +x /usr/local/bin/kubectl  
+  #     - run:
+  #         name: Install and confgure kubectl aws-iam-authenticator
+  #         command: curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-07-26/bin/linux/amd64/aws-iam-authenticator && sudo chmod +x ./aws-iam-authenticator && sudo cp ./aws-iam-authenticator /bin/aws-iam-authenticator
+  #     - run:
+  #         name: Install latest awscli version
+  #         command: sudo apt install unzip && curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip" && unzip awscli-bundle.zip &&./awscli-bundle/install -b ~/bin/aws
+  #     - run:
+  #         name: Configure AWS Access Key ID
+  #         command: |
+  #           aws configure set aws_access_key_id \
+  #           ACCESS_KEY_ID \
+  #           --profile default
+  #     - run:
+  #         name: Configure AWS Secret Access Key
+  #         command: |
+  #           aws configure set aws_secret_access_key \
+  #           SECRET_ACCESS_KEY \
+  #           --profile default
+  #     - run:
+  #         name: Configure AWS default region
+  #         command: |
+  #           aws configure set region AWS_REGION \
+  #           --profile default
+  #     - run:
+  #        name: Update Image From AWS ECR
+  #        command: |
+  #          kubectl set image deployment/flaskapp flaskapp=322218137685.dkr.ecr.us-west-2.amazonaws.com/flaskapp:0.2.27 --record
       # - run:
       #     name: Get the kubeconfig file 
       #     command: export KUBECONFIG=$HOME/.kube/kubeconfig && /home/circleci/bin/aws eks --region $AWS_REGION update-kubeconfig --name $EKS_CLUSTER_NAME
@@ -182,7 +183,7 @@ workflows:
           branches:
             only: master
         context: circleci-deployment
-    - deploy:
-        context: circleci-deployment
-        requires:
-          - build
+    # - deploy:
+    #     context: circleci-deployment
+    #     requires:
+    #       - build
