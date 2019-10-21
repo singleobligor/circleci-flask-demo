@@ -13,7 +13,7 @@ class TestSVCController(unittest.TestCase):
     
     def test_message(self):
         response = self.app.get('/')
-        message = wrap_html('Hello DockerCon 2018!')
+        message = wrap_html('Hello DockerCon 2020!')
         self.assertEqual(response.data.decode("utf-8"), message)
 
 if __name__ == '__main__':
