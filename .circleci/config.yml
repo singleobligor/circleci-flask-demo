@@ -131,11 +131,11 @@ jobs:
           install-kubectl: true
           aws-region: $AWS_DEFAULT_REGION
       - kubernetes/create-or-update-resource:
-          resource-file-path: "deployment/deployment.yaml"
+          resource-file-path: "deployment/flaskapp-deployment.yaml"
           get-rollout-status: true
           resource-name: deployment/flaskapp
       - kubernetes/create-or-update-resource:
-          resource-file-path: "deployment/service.yaml"
+          resource-file-path: "deployment/flaskapp-service.yaml"
 workflows:
   version: 2.1
   deployment:
