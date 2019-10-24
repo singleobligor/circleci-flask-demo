@@ -1,0 +1,12 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: flaskapp
+spec:
+  type : LoadBalancer
+  selector:
+    app: flaskapp
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 5000
