@@ -1,7 +1,7 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: flaskapp
+  name: flaskapp-deployment
 spec:
   type : LoadBalancer
   selector:
